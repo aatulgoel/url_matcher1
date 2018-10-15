@@ -1,0 +1,148 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="AA3CC5C8-F5A8-DD8D-AA91-88DA4BC59427" name="Matched_data">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:17:56 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<ordsAlias>table_2</ordsAlias>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<parsed>true</parsed>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="Id" id="0649FF0D-3314-7F64-C491-4DBCD41548B6">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Potential_matched_url" id="FCCE4FFA-884D-7638-5FBB-E6A476B562FB">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>1000</dataTypeSize>
+<ownDataTypeParameters>1000,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Hamming_score" id="395BF67B-ACA4-625A-EC92-300CE5D02500">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Token_position" id="278536EE-4733-4851-2BC2-91D484D9D6F7">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>100</dataTypeSize>
+<ownDataTypeParameters>100,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Token_Count" id="14EAE420-2B15-70C0-51DC-482AC76C4AD4">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Service_providing_system" id="0DB3AFB1-240B-EA95-A36D-55BA12624DEE">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>100</dataTypeSize>
+<ownDataTypeParameters>100,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Final_matched_url" id="23E2C3E1-A338-06D3-C221-2E5EDF242E94">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>1000</dataTypeSize>
+<ownDataTypeParameters>1000,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Auto_matched" id="C7342C30-15A8-0E61-E139-9B079BC1796E">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>1</dataTypeSize>
+<ownDataTypeParameters>1,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Auto_matched_verified" id="BDCE6B98-C83C-C5CA-4786-9D4AA2160ABE">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>1</dataTypeSize>
+<ownDataTypeParameters>1,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="False_positive" id="1DEF3882-6039-F2AE-C668-33901BB0D50E">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>1</dataTypeSize>
+<ownDataTypeParameters>1,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="Housekeep_raw_data" id="216BC385-E3E4-60A1-D0AB-919438E08323">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:27:11 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>1</dataTypeSize>
+<ownDataTypeParameters>1,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="9D9A462C-B7C6-11CD-E7F0-CCE2C6ED2190" name="Matched_data_PK">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:23:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="0649FF0D-3314-7F64-C491-4DBCD41548B6"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+</Table>

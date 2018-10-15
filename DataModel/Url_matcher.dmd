@@ -1,0 +1,8 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<OSDM_Design class="oracle.dbtools.crest.model.design.Design" name="Url_matcher" id="3FCE4771-7EF4-7903-6733-414783EC24D5" version="3.5">
+<createdBy>Oracle</createdBy>
+<createdTime>2018-10-13 17:13:14 UTC</createdTime>
+<ownerDesignName>Url_matcher</ownerDesignName>
+<capitalNames>false</capitalNames>
+<designId>3FCE4771-7EF4-7903-6733-414783EC24D5</designId>
+</OSDM_Design>
