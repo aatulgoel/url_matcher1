@@ -1,18 +1,15 @@
-def get_hamming_score(list1, list2):
-    hamming_score = 0
-    mismatch_position = ""
-    for index in range(len(list1)):
-        if list1[index] != list2[index]:
-            hamming_score += 1
-            mismatch_position = str(index) + ","
+import pandas as pd
+raw_url_list = '/a/s/d/f/g'.split('/')
+s = pd.Series(['1,2','1,2','1,2'])
+print(s)
+# s['a'] =  "/".join(
+#     ['XXXXXXXXXXXXXXXX' if x in s.iloc[index].split() else x for index, x in enumerate(raw_url_list, 0)])
+print (s)
 
-    mismatch_position = mismatch_position.strip(',')
-    print (hamming_score, mismatch_position)
-    return hamming_score, mismatch_position
-
-
-get_hamming_score([1,2,3], [1,2,4])
-
+for index, j in enumerate(raw_url_list, 0):
+    print("index = "+ str(index))
+    k = s.iloc[index].split()
+    print(k)
 
 
 
