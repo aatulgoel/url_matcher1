@@ -59,7 +59,8 @@ def get_matched_data_dict(hamming_score, mismatch_token_index_str, potential_mat
                          "auto_matched_verified": None,
                          "false_positive": None,
                          "housekeep_raw_data": None,
-                         "modified_flag": True}
+                         "modified_flag": True,
+                         "hit_count": 1}
     return matched_data_dict
 
 
