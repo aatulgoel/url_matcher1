@@ -3,7 +3,12 @@
 --   site:      Oracle Database 11g
 --   type:      Oracle Database 11g
 
-
+/*
+CREATE TABLESPACE url_matcher_tbs
+  DATAFILE 'url_matcher_tbs_01.dat' 
+    SIZE 20M
+  ONLINE;
+*/
 
 DROP TABLE matched_data CASCADE CONSTRAINTS;
 
@@ -23,7 +28,7 @@ CREATE TABLE matched_data (
     auto_matched_verified      VARCHAR2(1),
     false_positive             VARCHAR2(1),
     housekeep_raw_data         VARCHAR2(1)
-);
+) tablespace url_matcher_tbs;
 
 ALTER TABLE matched_data ADD CONSTRAINT matched_data_pk PRIMARY KEY ( id );
 
@@ -36,7 +41,7 @@ CREATE TABLE raw_data (
     service_providing_system   VARCHAR2(100) NOT NULL,
     service_using_system       VARCHAR2(100) NOT NULL,
     matched_data_id            NUMBER
-);
+) tablespace url_matcher_tbs;
 
 COMMENT ON COLUMN raw_data.id IS
     '			';

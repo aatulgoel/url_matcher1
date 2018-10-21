@@ -18,13 +18,14 @@ def url_matcher():
             print("counter = ", counter)
             # If both matched_data_df and raw_data_df are blank means the system is new
             # So we just insert the first fow of csv_log_file_df into raw_data_df
-            if len(matched_data_df) == 0 and len(raw_data_df) == 0:
-                append_row_to_raw_df(raw_data_df, row, generate_csv_string_from_list(row.tokens))
+            if len(matched_data_df.index) == 0 and len(raw_data_df.index) == 0:
+                raw_data_df = append_row_to_raw_df(raw_data_df, row, generate_csv_string_from_list(row.tokens))
 
             # If matched_data_df is blank but raw_data_df has data
             # We can find a potential match
             elif len(matched_data_df) == 0:
-                handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row)
+                raw_data_df, matched_data_df = handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df,
+                                                                                       row)
             else:
                 # If we have both matched_data_df and raw_data_df populated
                 # Which will be the usual case
@@ -34,9 +35,10 @@ def url_matcher():
                 existing_match_found, matched_row_id = find_if_url_is_already_matched(matched_data_df, row)
 
                 if existing_match_found:
-                    update_hit_count_value(matched_data_df, matched_row_id)
+                    matched_data_df = update_hit_count_value(matched_data_df, matched_row_id)
                 else:
-                    handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row)
+                    raw_data_df, matched_data_df = handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df,
+                                                                                           row)
 
         raw_data_df_to_persist = raw_data_df[raw_data_df["modified_flag"] == True]
         matched_data_df_to_persist = matched_data_df[matched_data_df["modified_flag"] == True]
@@ -78,19 +80,19 @@ def find_if_url_is_already_matched(matched_data_df, row):
 
 
 def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
-    hamming_score, mismatch_token_index_str = get_best_hamming_score_for_df(raw_data_df, row.tokens,
-                                                                            row.token_count)
+    hamming_score, mismatch_token_index_str, key_id = get_best_hamming_score_for_df(raw_data_df, row.tokens,
+                                                                                    row.token_count)
     if hamming_score == 0:
         # We found an exact match in raw_data_df
         # Update hit_count and mark modified_flag = True
-        update_hit_count_value(raw_data_df, row.id)
+        update_hit_count_value(raw_data_df, key_id)
     # If hamming Score = 1 then
     # We Found a potential match
     # Add row into matched_data_df
     # We update raw_data_df foreign key
     elif hamming_score == 1:
-        append_row_to_matched_df(hamming_score, matched_data_df, mismatch_token_index_str,
-                                 row, generate_csv_string_from_list(row.tokens))
+        matched_data_df = append_row_to_matched_df(hamming_score, matched_data_df, mismatch_token_index_str,
+                                                   row, generate_csv_string_from_list(row.tokens))
     else:
         # If hamming_score > 1
         # Not handling such cases now
@@ -99,7 +101,8 @@ def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
         # For now in such case, it is just another raw_data with no match
         # so just insert in raw_data_df
         # When we are in the last iteration
-        append_row_to_raw_df(raw_data_df, row, generate_csv_string_from_list(row.tokens))
+        raw_data_df = append_row_to_raw_df(raw_data_df, row, generate_csv_string_from_list(row.tokens))
+    return raw_data_df, matched_data_df
 
 
 def generate_csv_string_from_list(list_to_convert):
@@ -109,13 +112,14 @@ def generate_csv_string_from_list(list_to_convert):
 
 def persist_df(dataframe, table_name):
     connection = cm.ManageConnection().get_connection()
-    dataframe.to_sql(table_name, connection, if_exists="append", index=False)
+    dataframe.to_sql(table_name, connection,if_exists="replace", index=False)
 
 
 def initialize_data_frames():
     # Initialize data frames and add required columns
     raw_data_df = load_data_from_db("select * from raw_data")
     matched_data_df = load_data_from_db("select * from matched_data")
+    raw_data_df[["matched_data_id"]] = raw_data_df[["matched_data_id"]].apply(pd.to_numeric)
     csv_log_file_df = pd.read_csv("../log_of_urls_invoked.csv")
     csv_log_file_df["tokens"] = csv_log_file_df["URL"].str.strip("'").str.strip('/').str.split('/')
     csv_log_file_df["token_count"] = csv_log_file_df["tokens"].str.len()
@@ -129,16 +133,18 @@ def get_best_hamming_score_for_df(data_frame, token_list, token_count):
     # Should be a big performance boost in long run
     hamming_score = 0
     mismatch_token_index_str = ""
+    key_id = -1
     df_filtered_on_token_count = data_frame[(data_frame.token_count == token_count)]
     # Get Hamming Score
     for index, raw_data_row in enumerate(df_filtered_on_token_count.itertuples(), 1):
         hamming_score, mismatch_token_index_str = get_hamming_score(raw_data_row.tokens.split(','),
                                                                     token_list)
+        key_id = raw_data_row.id
         # If hamming Score = 0 then Current row matches exactly with a row in raw_data_df
         # In this case we just increase the hit count
         if hamming_score == 0 or hamming_score == 1:
             break
-    return hamming_score, mismatch_token_index_str
+    return hamming_score, mismatch_token_index_str, key_id
 
 
 def append_row_to_raw_df(raw_data_df, row, token_string):
@@ -161,6 +167,6 @@ def update_hit_count_value(data_frame, row_id):
     row_to_modify = data_frame.loc[data_frame["id"] == row_id]
     data_frame.loc[data_frame["id"] == row_id, ["hit_count", "modified_flag"]] = \
         row_to_modify['hit_count'].iloc[0] + 1, True
-
+    return data_frame
 
 url_matcher()
