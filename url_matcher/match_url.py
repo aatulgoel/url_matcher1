@@ -4,7 +4,7 @@ import pandas as pd
 
 from connection_manager import oracle_connection_manager as cm
 from util.util import load_data_from_db, get_hamming_score, get_raw_data_dict, get_matched_data_dict, \
-    get_potential_matched_url
+    get_potential_matched_url, generate_csv_string_from_list
 
 
 def url_matcher():
@@ -19,7 +19,7 @@ def url_matcher():
             # If both matched_data_df and raw_data_df are blank means the system is new
             # So we just insert the first fow of csv_log_file_df into raw_data_df
             if len(matched_data_df.index) == 0 and len(raw_data_df.index) == 0:
-                raw_data_df = append_row_to_raw_df(raw_data_df, row, generate_csv_string_from_list(row.tokens))
+                raw_data_df = append_row_to_raw_df(raw_data_df, row)
 
             # If matched_data_df is blank but raw_data_df has data
             # We can find a potential match
@@ -80,8 +80,7 @@ def find_if_url_is_already_matched(matched_data_df, row):
 
 
 def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
-    hamming_score, mismatch_token_index_str, raw_data_id = get_best_hamming_score_for_df(raw_data_df, row.tokens,
-                                                                                    row.token_count)
+    hamming_score, mismatch_token_index_str, raw_data_id = get_best_hamming_score_for_df(raw_data_df, row)
     if hamming_score == 0:
         # We found an exact match in raw_data_df
         # Update hit_count and mark modified_flag = True
@@ -94,7 +93,7 @@ def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
         matched_data_df, matched_data_id = append_row_to_matched_df(hamming_score, matched_data_df,
                                                                     mismatch_token_index_str,
                                                                     row, generate_csv_string_from_list(row.tokens))
-        raw_data_df = create_matched_raw_data_link(raw_data_df,raw_data_id,matched_data_id)
+        raw_data_df = create_matched_raw_data_link(raw_data_df, raw_data_id, matched_data_id)
     else:
         # If hamming_score > 1
         # Not handling such cases now
@@ -103,18 +102,13 @@ def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
         # For now in such case, it is just another raw_data with no match
         # so just insert in raw_data_df
         # When we are in the last iteration
-        raw_data_df = append_row_to_raw_df(raw_data_df, row, generate_csv_string_from_list(row.tokens))
+        raw_data_df = append_row_to_raw_df(raw_data_df, row)
     return raw_data_df, matched_data_df
-
-
-def generate_csv_string_from_list(list_to_convert):
-    token_string = ','.join(list_to_convert)
-    return token_string
 
 
 def persist_df(dataframe, table_name):
     connection = cm.ManageConnection().get_connection()
-    dataframe.to_sql(table_name, connection,if_exists="replace", index=False)
+    dataframe.to_sql(table_name, connection, if_exists="replace", index=False)
 
 
 def initialize_data_frames():
@@ -130,17 +124,18 @@ def initialize_data_frames():
     return csv_log_file_df, matched_data_df, raw_data_df
 
 
-def get_best_hamming_score_for_df(data_frame, token_list, token_count):
+def get_best_hamming_score_for_df(raw_data_df, row):
     # Filter raw_data_df using token_count as criteria
     # Should be a big performance boost in long run
-    hamming_score = 0
+    hamming_score = -1
     mismatch_token_index_str = ""
     key_id = -1
-    df_filtered_on_token_count = data_frame[(data_frame.token_count == token_count)]
+    df_filtered_on_token_count = raw_data_df[
+        (raw_data_df["token_count"] == row.token_count) & (raw_data_df["matched_data_id"] is None)]
     # Get Hamming Score
     for index, raw_data_row in enumerate(df_filtered_on_token_count.itertuples(), 1):
         hamming_score, mismatch_token_index_str = get_hamming_score(raw_data_row.tokens.split(','),
-                                                                    token_list)
+                                                                    row.token_list)
         key_id = raw_data_row.id
         # If hamming Score = 0 then Current row matches exactly with a row in raw_data_df
         # In this case we just increase the hit count
@@ -149,8 +144,8 @@ def get_best_hamming_score_for_df(data_frame, token_list, token_count):
     return hamming_score, mismatch_token_index_str, key_id
 
 
-def append_row_to_raw_df(raw_data_df, row, token_string):
-    raw_data_dict = get_raw_data_dict(row, token_string)
+def append_row_to_raw_df(raw_data_df, row):
+    raw_data_dict = get_raw_data_dict(row)
     data_dict_df = pd.DataFrame(raw_data_dict, index=[id])
     raw_data_df = raw_data_df.append(data_dict_df, sort=True)
     return raw_data_df
@@ -173,8 +168,8 @@ def update_hit_count_value(data_frame, row_id):
     return data_frame
 
 
-def create_matched_raw_data_link(raw_data_df,raw_data_id,matched_data_id):
-    raw_data_df.loc[raw_data_df["id"] == raw_data_id, ["MATCHED_DATA_id"] ] = matched_data_id
+def create_matched_raw_data_link(raw_data_df, raw_data_id, matched_data_id):
+    raw_data_df.loc[raw_data_df["id"] == raw_data_id, ["MATCHED_DATA_id"]] = matched_data_id
     return raw_data_df
 
 

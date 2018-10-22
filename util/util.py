@@ -34,14 +34,14 @@ def get_hamming_score(list1, list2):
     return hamming_score, mismatch_position
 
 
-def get_raw_data_dict(row, token_string):
+def get_raw_data_dict(row):
     raw_data_dict = {"id": get_primary_key(),
                      "raw_url": row.URL,
                      "hit_count": 1,
                      "service_providing_system": row.sourceIP,
                      "service_using_system": row.appName,
                      "token_count": row.token_count,
-                     "tokens": token_string,
+                     "tokens": generate_csv_string_from_list(row.tokens),
                      "modified_flag": True}
     return raw_data_dict
 
@@ -71,3 +71,8 @@ def get_potential_matched_url(tokens, mismatch_position):
     potential_matched_url = "/".join(tokens)
     potential_matched_url = "/" + potential_matched_url
     return potential_matched_url
+
+
+def generate_csv_string_from_list(list_to_convert):
+    token_string = ','.join(list_to_convert)
+    return token_string
