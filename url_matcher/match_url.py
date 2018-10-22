@@ -80,19 +80,21 @@ def find_if_url_is_already_matched(matched_data_df, row):
 
 
 def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
-    hamming_score, mismatch_token_index_str, key_id = get_best_hamming_score_for_df(raw_data_df, row.tokens,
+    hamming_score, mismatch_token_index_str, raw_data_id = get_best_hamming_score_for_df(raw_data_df, row.tokens,
                                                                                     row.token_count)
     if hamming_score == 0:
         # We found an exact match in raw_data_df
         # Update hit_count and mark modified_flag = True
-        update_hit_count_value(raw_data_df, key_id)
+        update_hit_count_value(raw_data_df, raw_data_id)
     # If hamming Score = 1 then
     # We Found a potential match
     # Add row into matched_data_df
     # We update raw_data_df foreign key
     elif hamming_score == 1:
-        matched_data_df = append_row_to_matched_df(hamming_score, matched_data_df, mismatch_token_index_str,
-                                                   row, generate_csv_string_from_list(row.tokens))
+        matched_data_df, matched_data_id = append_row_to_matched_df(hamming_score, matched_data_df,
+                                                                    mismatch_token_index_str,
+                                                                    row, generate_csv_string_from_list(row.tokens))
+        raw_data_df = create_matched_raw_data_link(raw_data_df,raw_data_id,matched_data_id)
     else:
         # If hamming_score > 1
         # Not handling such cases now
@@ -160,7 +162,8 @@ def append_row_to_matched_df(hamming_score, matched_data_df, mismatch_token_inde
                                               row, token_string)
     matched_data_dict_to_df = pd.DataFrame(matched_data_dict, index=["id"])
     matched_data_df = matched_data_df.append(matched_data_dict_to_df, sort=True)
-    return matched_data_df
+    matched_data_id = matched_data_dict.id
+    return matched_data_df, matched_data_id
 
 
 def update_hit_count_value(data_frame, row_id):
@@ -168,5 +171,11 @@ def update_hit_count_value(data_frame, row_id):
     data_frame.loc[data_frame["id"] == row_id, ["hit_count", "modified_flag"]] = \
         row_to_modify['hit_count'].iloc[0] + 1, True
     return data_frame
+
+
+def create_matched_raw_data_link(raw_data_df,raw_data_id,matched_data_id):
+    raw_data_df.loc[raw_data_df["id"] == raw_data_id, ["MATCHED_DATA_id"] ] = matched_data_id
+    return raw_data_df
+
 
 url_matcher()
