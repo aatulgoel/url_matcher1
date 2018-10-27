@@ -1,15 +1,9 @@
 import pandas as pd
-raw_url_list = '/a/s/d/f/g'.split('/')
-s = pd.Series(['1,2','1,2','1,2'])
-print(s)
-# s['a'] =  "/".join(
-#     ['XXXXXXXXXXXXXXXX' if x in s.iloc[index].split() else x for index, x in enumerate(raw_url_list, 0)])
-print (s)
+a = set([1,2,3])
+b = set([4,5,6])
 
-for index, j in enumerate(raw_url_list, 0):
-    print("index = "+ str(index))
-    k = s.iloc[index].split()
-    print(k)
-
-
+if a&b == set([]):
+    print(1)
+else:
+    print(2)
 

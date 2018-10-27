@@ -1,6 +1,7 @@
 import traceback
 
 import pandas as pd
+import sqlalchemy
 
 from connection_manager import oracle_connection_manager as cm
 from util.util import load_data_from_db, get_hamming_score, get_raw_data_dict, get_matched_data_dict, \
@@ -45,8 +46,8 @@ def url_matcher():
         matched_data_df_to_persist["auto_matched"] = "N"
         raw_data_df_to_persist = raw_data_df_to_persist.drop(["modified_flag"], axis=1, )
         matched_data_df_to_persist = matched_data_df_to_persist.drop(["modified_flag"], axis=1)
-        persist_df(raw_data_df_to_persist, "raw_data")
-        persist_df(matched_data_df_to_persist, "matched_data")
+        persist_df(raw_data_df_to_persist, "RAW_DATA")
+        persist_df(matched_data_df_to_persist, "MATCHED_DATA")
     except Exception as e:
         traceback.print_exc(e)
 
@@ -58,24 +59,25 @@ def find_if_url_is_already_matched(matched_data_df, row):
     matched_row_id = -1
     for index, filtered_row in enumerate(matched_data_df_filtered_on_token_count.itertuples(), 0):
         # We can just match on full URL's in matched_data_url and row
-        if filtered_row.token_position == "":
-            if filtered_row["potential_matched_url"] == row.potential_matched_url:
-                match_found_flag = True
-                matched_row_id = filtered_row.id
-                break
+        if set(filtered_row.tokens) & set(row.tokens) != set([]):
+            if filtered_row.token_position == "":
+                if filtered_row["potential_matched_url"] == row.potential_matched_url:
+                    match_found_flag = True
+                    matched_row_id = filtered_row.id
+                    break
+                else:
+                    continue
             else:
-                continue
-        else:
-            # Generate potential_row_url to match with filtered_row
-            potential_row_url = get_potential_matched_url(row.tokens, filtered_row.token_position)
-            if potential_row_url == filtered_row.potential_matched_url:
-                # Since we already have a matched URL
-                # Nothing else to do
-                match_found_flag = True
-                matched_row_id = filtered_row.id
-                break
-            else:
-                continue
+                # Generate potential_row_url to match with filtered_row
+                potential_row_url = get_potential_matched_url(row.tokens, filtered_row.token_position)
+                if potential_row_url == filtered_row.potential_matched_url:
+                    # Since we already have a matched URL
+                    # Nothing else to do
+                    match_found_flag = True
+                    matched_row_id = filtered_row.id
+                    break
+                else:
+                    continue
     return match_found_flag, matched_row_id
 
 
@@ -106,16 +108,104 @@ def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
     return raw_data_df, matched_data_df
 
 
-def persist_df(dataframe, table_name):
+def persist_df(data_frame, table_name):
+    df_insert = data_frame[data_frame["already_exists_in_db"] != True]
+    df_insert.drop(["already_exists_in_db"], inplace=True, axis="column")
+    df_update = data_frame[data_frame["already_exists_in_db"] == True]
+
+    print(data_frame.dtypes)
+    output_dict = sqlcol(data_frame)
     connection = cm.ManageConnection().get_connection()
-    dataframe.to_sql(table_name, connection, if_exists="replace", index=False)
+    df_insert.to_sql(table_name, connection, if_exists="append", index=False, dtype=output_dict)
+
+    cur = connection.cursor()
+    if table_name == "raw_data":
+        update_statement = get_update_stmt(table_name)
+        for row_to_update in df_update.itertuples():
+            cur.execute(update_statement, (row_to_update.HIT_COUNT,
+                                           row_to_update.MATCHED_DATA_ID,
+                                           row_to_update.RAW_URL,
+                                           row_to_update.SERVICE_PROVIDING_SYSTEM,
+                                           row_to_update.TOKEN_COUNT,
+                                           row_to_update.TOKENS,
+                                           row_to_update.id))
+    elif table_name == "matched_data":
+        update_statement = get_update_stmt(table_name)
+        for row_to_update in df_update.itertuples():
+            cur.execute(update_statement, (row_to_update.potential_matched_url,
+                                           row_to_update.hamming_score,
+                                           row_to_update.tokens,
+                                           row_to_update.token_position,
+                                           row_to_update.token_count,
+                                           row_to_update.service_providing_system,
+                                           row_to_update.final_matched_url,
+                                           row_to_update.auto_matched,
+                                           row_to_update.auto_matched_verified,
+                                           row_to_update.false_positive,
+                                           row_to_update.housekeep_raw_data,
+                                           row_to_update.id))
+
+
+def get_update_stmt(table_name):
+    raw_data_update_str = "update raw_data set  \
+                                hit_count = :hit_count,\
+                                matched_data_id =:matched_data_id\
+                                raw_url =:raw_url,\
+                                service_providing_system =:service_providing_system,\
+                                service_using_system =:service_using_system,\
+                                token_count =:token_count,\
+                                tokens =:tokens \
+                                where id = :id"
+
+    matched_data_update_str = "update raw_data set  \
+                            potential_matched_url = :potential_matched_url,\
+                            hamming_score =:hamming_score\
+                            tokens =:tokens,\
+                            hit_count =:hit_count,\
+                            token_position =:token_position,\
+                            token_count =:token_count,\
+                            service_providing_system =:service_providing_system \
+                            final_matched_url =:final_matched_url, \
+                            auto_matched =:auto_matched, \
+                            auto_matched_verified =:auto_matched_verified, \
+                            false_positive =:false_positive, \
+                            housekeep_raw_data =:housekeep_raw_data \
+                            where id = :id"
+    if table_name == "raw_data":
+        return raw_data_update_str
+    elif table_name == "matched_data":
+        return matched_data_update_str
+    else:
+        print("Error")
+
+
+def sqlcol(data_frame_params):
+    data_type_dict = {}
+    for i, j in zip(data_frame_params.columns, data_frame_params.dtypes):
+        if "object" in str(j):
+            data_type_dict.update({i: sqlalchemy.types.VARCHAR(length=1000)})
+        if "datetime" in str(j):
+            data_type_dict.update({i: sqlalchemy.types.DateTime()})
+        if "float" in str(j):
+            data_type_dict.update({i: sqlalchemy.types.Float(precision=3, asdecimal=True)})
+        if "int" in str(j):
+            data_type_dict.update({i: sqlalchemy.types.INT()})
+
+    return data_type_dict
 
 
 def initialize_data_frames():
     # Initialize data frames and add required columns
     raw_data_df = load_data_from_db("select * from raw_data")
+    raw_data_df["already_exists_in_db"] = True
     matched_data_df = load_data_from_db("select * from matched_data")
-    raw_data_df[["matched_data_id"]] = raw_data_df[["matched_data_id"]].apply(pd.to_numeric)
+    matched_data_df["already_exists_in_db"] = True
+
+    # raw_data_df[["id", "token_count", "hit_count", "matched_data_id"]] = raw_data_df[
+    #     ["id", "token_count", "hit_count", "matched_data_id"]].astype(np.int64, errors='ignore')
+    # matched_data_df[["id", "token_count", "hit_count", "hamming_score"]] = matched_data_df[
+    #     ["id", "token_count", "hit_count", "hamming_score"]].astype(np.int64, errors='ignore')
+
     csv_log_file_df = pd.read_csv("../log_of_urls_invoked.csv")
     csv_log_file_df["tokens"] = csv_log_file_df["URL"].str.strip("'").str.strip('/').str.split('/')
     csv_log_file_df["token_count"] = csv_log_file_df["tokens"].str.len()
