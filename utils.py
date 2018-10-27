@@ -2,7 +2,7 @@ import traceback
 
 import pandas as pd
 
-from connection_manager import oracle_connection_manager as cm
+from connection import oracle as cm
 
 
 def get_primary_key():

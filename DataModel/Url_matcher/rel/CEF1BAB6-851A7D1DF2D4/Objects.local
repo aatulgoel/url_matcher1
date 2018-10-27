@@ -1,6 +1,0 @@
-<?xml version = '1.0' encoding = 'UTF-8'?>
-<oracle.dbtools.crest.model.design.relational.RelationalDesign>
-   <object objectType="Table" objectID="6DF8B579-E216-FF9F-DD8E-E621D9876474" name="Raw_data" seqName="seg_0" propertyClassName="oracle.dbtools.crest.model.design.relational.Table" propertyParentId="CEF1BAB6-B90D-7B86-8953-851A7D1DF2D4" propertySourceId="" propertyTargetId=""/>
-   <object objectType="Table" objectID="AA3CC5C8-F5A8-DD8D-AA91-88DA4BC59427" name="Matched_data" seqName="seg_0" propertyClassName="oracle.dbtools.crest.model.design.relational.Table" propertyParentId="CEF1BAB6-B90D-7B86-8953-851A7D1DF2D4" propertySourceId="" propertyTargetId=""/>
-   <object objectType="FKIndexAssociation" objectID="22726FDF-8B9B-FD3B-F8C8-641C578CF095" name="Raw_data_Matched_data_FK" containerID="6DF8B579-E216-FF9F-DD8E-E621D9876474" refContainerID="AA3CC5C8-F5A8-DD8D-AA91-88DA4BC59427" seqName="seg_0" propertyClassName="oracle.dbtools.crest.model.design.relational.FKIndexAssociation" propertyParentId="CEF1BAB6-B90D-7B86-8953-851A7D1DF2D4" propertySourceId="AA3CC5C8-F5A8-DD8D-AA91-88DA4BC59427" propertyTargetId="6DF8B579-E216-FF9F-DD8E-E621D9876474"/>
-</oracle.dbtools.crest.model.design.relational.RelationalDesign>

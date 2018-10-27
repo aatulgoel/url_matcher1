@@ -1,0 +1,7 @@
+cx-Oracle==7.0.0
+numpy==1.15.3
+pandas==0.23.4
+python-dateutil==2.7.4
+pytz==2018.6
+six==1.11.0
+SQLAlchemy==1.2.12
