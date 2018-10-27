@@ -60,7 +60,7 @@ def find_if_url_is_already_matched(matched_data_df, row):
     matched_row_id = -1
     for index, filtered_row in enumerate(matched_data_df_filtered_on_token_count.itertuples(), 0):
         # We can just match on full URL's in matched_data_url and row
-        if set(filtered_row.tokens) & set(row.tokens) != set([]):
+        if set(filtered_row.tokens.split(',')) & set(row.tokens) != set([]):
             if filtered_row.token_position == "":
                 if filtered_row["potential_matched_url"] == row.potential_matched_url:
                     match_found_flag = True
@@ -241,14 +241,13 @@ def get_best_hamming_score_for_df(raw_data_df, row):
 
 
 def append_row_to_raw_df(raw_data_df, row):
-    check_if_row_exists = (raw_data_df["raw_url"] == row.raw_url).any()
-
-#     if row.RAW_URL
-# SERVICE_PROVIDING_SYSTEM
-# SERVICE_USING_SYSTEM
-    raw_data_dict = get_raw_data_dict(row)
-    data_dict_df = pd.DataFrame(raw_data_dict, index=[id])
-    raw_data_df = raw_data_df.append(data_dict_df, sort=True)
+    check_if_row_exists = (
+                (raw_data_df["raw_url"] == row.URL) & (raw_data_df["service_providing_system"] == row.sourceIP) & (
+                    raw_data_df["service_using_system"] == row.appName)).any()
+    if not check_if_row_exists:
+        raw_data_dict = get_raw_data_dict(row)
+        data_dict_df = pd.DataFrame(raw_data_dict, index=[id])
+        raw_data_df = raw_data_df.append(data_dict_df, sort=True)
     return raw_data_df
 
 
