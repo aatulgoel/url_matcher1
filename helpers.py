@@ -2,7 +2,7 @@ import pandas as pd
 
 from connection import oracle as cm
 from constants import MATCHED_DATA_UPDATE_STRING, RAW_DATA_UPDATE_STRING
-from main import sqlcol
+
 from utils import get_potential_matched_url, get_hamming_score, get_raw_data_dict, get_matched_data_dict
 
 
@@ -46,9 +46,8 @@ def persist_df(data_frame, table_name):
     df_insert = data_frame[data_frame["already_exists_in_db"] != True]
     df_insert.drop(["already_exists_in_db"], inplace=True, axis=1)
     df_update = data_frame[data_frame["already_exists_in_db"] == True]
-    output_dict = sqlcol(data_frame)
     connection = cm.ManageConnection().get_connection()
-    df_insert.to_sql(table_name, connection, if_exists="append", index=False, dtype=output_dict)
+    df_insert.to_sql(table_name, connection, if_exists="append", index=False)
 
     if table_name == "raw_data":
         update_statement = get_update_stmt(table_name)
