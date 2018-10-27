@@ -110,6 +110,7 @@ def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
 
 
 def persist_df(data_frame, table_name):
+    data_frame = data_frame
     df_insert = data_frame[data_frame["already_exists_in_db"] != True]
     df_insert.drop(["already_exists_in_db"], inplace=True, axis=1)
     df_update = data_frame[data_frame["already_exists_in_db"] == True]
@@ -138,6 +139,7 @@ def persist_df(data_frame, table_name):
             connection.execute(update_statement, (row_to_update.potential_matched_url,
                                                   row_to_update.hamming_score,
                                                   row_to_update.tokens,
+                                                  row_to_update.hit_count,
                                                   row_to_update.token_position,
                                                   row_to_update.token_count,
                                                   row_to_update.service_providing_system,
@@ -200,6 +202,7 @@ def sqlcol(data_frame_params):
 def initialize_data_frames():
     # Initialize data frames and add required columns
     raw_data_df = load_data_from_db("select * from raw_data")
+    raw_data_df = raw_data_df.fillna({"matched_data_id": ''})
     raw_data_df["already_exists_in_db"] = True
     matched_data_df = load_data_from_db("select * from matched_data")
     matched_data_df["already_exists_in_db"] = True
@@ -238,6 +241,11 @@ def get_best_hamming_score_for_df(raw_data_df, row):
 
 
 def append_row_to_raw_df(raw_data_df, row):
+    check_if_row_exists = (raw_data_df["raw_url"] == row.raw_url).any()
+
+#     if row.RAW_URL
+# SERVICE_PROVIDING_SYSTEM
+# SERVICE_USING_SYSTEM
     raw_data_dict = get_raw_data_dict(row)
     data_dict_df = pd.DataFrame(raw_data_dict, index=[id])
     raw_data_df = raw_data_df.append(data_dict_df, sort=True)
