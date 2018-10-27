@@ -46,8 +46,9 @@ def url_matcher():
         matched_data_df_to_persist["auto_matched"] = "N"
         raw_data_df_to_persist = raw_data_df_to_persist.drop(["modified_flag"], axis=1, )
         matched_data_df_to_persist = matched_data_df_to_persist.drop(["modified_flag"], axis=1)
-        persist_df(raw_data_df_to_persist, "RAW_DATA")
-        persist_df(matched_data_df_to_persist, "MATCHED_DATA")
+
+        persist_df(matched_data_df_to_persist, "matched_data")
+        persist_df(raw_data_df_to_persist, "raw_data")
     except Exception as e:
         traceback.print_exc(e)
 
@@ -110,46 +111,48 @@ def handle_no_existing_matched_url_scenario(matched_data_df, raw_data_df, row):
 
 def persist_df(data_frame, table_name):
     df_insert = data_frame[data_frame["already_exists_in_db"] != True]
-    df_insert.drop(["already_exists_in_db"], inplace=True, axis="column")
+    df_insert.drop(["already_exists_in_db"], inplace=True, axis=1)
     df_update = data_frame[data_frame["already_exists_in_db"] == True]
+    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
+    print("df_update number of rows = ", df_update.shape[0])
     print(data_frame.dtypes)
     output_dict = sqlcol(data_frame)
     connection = cm.ManageConnection().get_connection()
     df_insert.to_sql(table_name, connection, if_exists="append", index=False, dtype=output_dict)
 
-    cur = connection.cursor()
     if table_name == "raw_data":
         update_statement = get_update_stmt(table_name)
         for row_to_update in df_update.itertuples():
-            cur.execute(update_statement, (row_to_update.HIT_COUNT,
-                                           row_to_update.MATCHED_DATA_ID,
-                                           row_to_update.RAW_URL,
-                                           row_to_update.SERVICE_PROVIDING_SYSTEM,
-                                           row_to_update.TOKEN_COUNT,
-                                           row_to_update.TOKENS,
-                                           row_to_update.id))
+            connection.execute(update_statement, (row_to_update.hit_count,
+                                                  row_to_update.matched_data_id,
+                                                  row_to_update.raw_url,
+                                                  row_to_update.service_providing_system,
+                                                  row_to_update.service_using_system,
+                                                  row_to_update.token_count,
+                                                  row_to_update.tokens,
+                                                  row_to_update.id))
     elif table_name == "matched_data":
         update_statement = get_update_stmt(table_name)
         for row_to_update in df_update.itertuples():
-            cur.execute(update_statement, (row_to_update.potential_matched_url,
-                                           row_to_update.hamming_score,
-                                           row_to_update.tokens,
-                                           row_to_update.token_position,
-                                           row_to_update.token_count,
-                                           row_to_update.service_providing_system,
-                                           row_to_update.final_matched_url,
-                                           row_to_update.auto_matched,
-                                           row_to_update.auto_matched_verified,
-                                           row_to_update.false_positive,
-                                           row_to_update.housekeep_raw_data,
-                                           row_to_update.id))
+            connection.execute(update_statement, (row_to_update.potential_matched_url,
+                                                  row_to_update.hamming_score,
+                                                  row_to_update.tokens,
+                                                  row_to_update.token_position,
+                                                  row_to_update.token_count,
+                                                  row_to_update.service_providing_system,
+                                                  row_to_update.final_matched_url,
+                                                  row_to_update.auto_matched,
+                                                  row_to_update.auto_matched_verified,
+                                                  row_to_update.false_positive,
+                                                  row_to_update.housekeep_raw_data,
+                                                  row_to_update.id))
 
 
 def get_update_stmt(table_name):
     raw_data_update_str = "update raw_data set  \
                                 hit_count = :hit_count,\
-                                matched_data_id =:matched_data_id\
+                                matched_data_id =:matched_data_id,\
                                 raw_url =:raw_url,\
                                 service_providing_system =:service_providing_system,\
                                 service_using_system =:service_using_system,\
@@ -157,14 +160,14 @@ def get_update_stmt(table_name):
                                 tokens =:tokens \
                                 where id = :id"
 
-    matched_data_update_str = "update raw_data set  \
+    matched_data_update_str = "update matched_data set  \
                             potential_matched_url = :potential_matched_url,\
-                            hamming_score =:hamming_score\
+                            hamming_score =:hamming_score,\
                             tokens =:tokens,\
                             hit_count =:hit_count,\
                             token_position =:token_position,\
                             token_count =:token_count,\
-                            service_providing_system =:service_providing_system \
+                            service_providing_system =:service_providing_system, \
                             final_matched_url =:final_matched_url, \
                             auto_matched =:auto_matched, \
                             auto_matched_verified =:auto_matched_verified, \
@@ -221,11 +224,11 @@ def get_best_hamming_score_for_df(raw_data_df, row):
     mismatch_token_index_str = ""
     key_id = -1
     df_filtered_on_token_count = raw_data_df[
-        (raw_data_df["token_count"] == row.token_count) & (raw_data_df["matched_data_id"] is None)]
+        (raw_data_df["token_count"] == row.token_count) & (raw_data_df["matched_data_id"].isnull())]
     # Get Hamming Score
     for index, raw_data_row in enumerate(df_filtered_on_token_count.itertuples(), 1):
         hamming_score, mismatch_token_index_str = get_hamming_score(raw_data_row.tokens.split(','),
-                                                                    row.token_list)
+                                                                    row.tokens)
         key_id = raw_data_row.id
         # If hamming Score = 0 then Current row matches exactly with a row in raw_data_df
         # In this case we just increase the hit count
@@ -247,7 +250,7 @@ def append_row_to_matched_df(hamming_score, matched_data_df, mismatch_token_inde
                                               row, token_string)
     matched_data_dict_to_df = pd.DataFrame(matched_data_dict, index=["id"])
     matched_data_df = matched_data_df.append(matched_data_dict_to_df, sort=True)
-    matched_data_id = matched_data_dict.id
+    matched_data_id = matched_data_dict.get("id")
     return matched_data_df, matched_data_id
 
 
@@ -259,7 +262,7 @@ def update_hit_count_value(data_frame, row_id):
 
 
 def create_matched_raw_data_link(raw_data_df, raw_data_id, matched_data_id):
-    raw_data_df.loc[raw_data_df["id"] == raw_data_id, ["MATCHED_DATA_id"]] = matched_data_id
+    raw_data_df.loc[raw_data_df["id"] == raw_data_id, ["matched_data_id"]] = matched_data_id
     return raw_data_df
 
 
