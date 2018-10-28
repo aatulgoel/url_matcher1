@@ -2,7 +2,7 @@ import traceback
 
 import pandas as pd
 
-from utils import load_data_from_db, generate_csv_string_from_list
+from utils import load_data_from_db, generate_csv_string_from_list, set_max_id_values
 from helpers import find_if_url_is_already_matched, persist_df, get_best_hamming_score_for_df, append_row_to_raw_df, \
     append_row_to_matched_df, update_hit_count_value, create_matched_raw_data_link
 
@@ -72,6 +72,7 @@ def initialize_data_frames():
     raw_data_df["already_exists_in_db"] = True
     matched_data_df = load_data_from_db("select * from matched_data")
     matched_data_df["already_exists_in_db"] = True
+    set_max_id_values(raw_data_df,matched_data_df)
     csv_log_file_df = pd.read_csv("./data/log_of_urls_invoked.csv")
     csv_log_file_df["tokens"] = csv_log_file_df["URL"].str.strip("'").str.strip('/').str.split('/')
     csv_log_file_df["token_count"] = csv_log_file_df["tokens"].str.len()

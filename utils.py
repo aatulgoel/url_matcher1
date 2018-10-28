@@ -1,17 +1,40 @@
 import traceback
 
 import pandas as pd
+import numpy as np
 
 from connection import oracle as cm
 
+max_raw_data_id = None
+max_matched_data_id = None
 
-def get_primary_key():
-    connection = cm.ManageConnection().get_connection()
-    raw_data_id_result = connection.execute("select raw_data_seq.nextval as seqval from dual")
-    raw_data_id = None
-    for seq_result in raw_data_id_result:
-        raw_data_id = seq_result.seqval
-    return raw_data_id
+
+def set_max_id_values(raw_data_df, matched_data_df):
+    global max_raw_data_id
+    global max_matched_data_id
+
+    max_raw_data_id = raw_data_df["id"].max() if not np.isnan(raw_data_df["id"].max()) else 0
+    max_matched_data_id = matched_data_df["id"].max() if not np.isnan(matched_data_df["id"].max()) else 0
+
+
+def get_primary_key(df_name):
+    global max_raw_data_id
+    global max_matched_data_id
+    if df_name == "raw_data":
+        max_raw_data_id = max_raw_data_id + 1
+        return max_raw_data_id
+    elif df_name == "matched_data":
+        max_matched_data_id = max_matched_data_id + 1
+        return max_matched_data_id
+    else:
+        return None
+
+    # connection = cm.ManageConnection().get_connection()
+    # raw_data_id_result = connection.execute("select raw_data_seq.nextval as seqval from dual")
+    # raw_data_id = None
+    # for seq_result in raw_data_id_result:
+    #     raw_data_id = seq_result.seqval
+    # return raw_data_id
 
 
 def load_data_from_db(sql_stmt):
@@ -35,7 +58,7 @@ def get_hamming_score(list1, list2):
 
 
 def get_raw_data_dict(row):
-    raw_data_dict = {"id": get_primary_key(),
+    raw_data_dict = {"id": get_primary_key("raw_data"),
                      "raw_url": row.URL,
                      "hit_count": 1,
                      "service_providing_system": row.sourceIP,
@@ -47,7 +70,7 @@ def get_raw_data_dict(row):
 
 
 def get_matched_data_dict(hamming_score, mismatch_token_index_str, potential_matched_url, row, token_string):
-    matched_data_dict = {"id": get_primary_key(),
+    matched_data_dict = {"id": get_primary_key("matched_data"),
                          "potential_matched_url": potential_matched_url,
                          "hamming_score": hamming_score,
                          "tokens": token_string,
